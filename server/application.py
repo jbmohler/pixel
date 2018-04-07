@@ -19,6 +19,13 @@ def hello():
     config = get_configuration()
     return "Hello World -- {}!".format(config['name'])
 
+@app.route("/api/long")
+def hello():
+    import time
+    time.sleep(15)
+    config = get_configuration()
+    return "Hello World -- {}!".format(config['name'])
+
 if __name__ == "__main__":
     config = get_configuration()
     app.run(port=config['port'])
