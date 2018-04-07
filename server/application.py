@@ -20,7 +20,7 @@ def hello():
     return "Hello World -- {}!".format(config['name'])
 
 @app.route("/api/long")
-def hello():
+def api_long():
     import time
     time.sleep(15)
     config = get_configuration()
