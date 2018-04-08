@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import numpy as np
 import png
@@ -34,19 +35,22 @@ def put_api_pixel():
     y = int(request.form['y'])
     value = request.form['value']
 
-    print(x, y, value)
     app._image = np.zeros((10, 10), dtype=int)
     app._image[x, y] = 1
-    print(app._image)
     return 'assigned', 200
 
 @app.route('/pixel-image.png')
 def get_pixel_image():
-    import io
-    pig = io.BytesIO()
-    im = Image.fromarray(app._image)
-    im.save(pig, 'png')
-    return pig.data(), 200
+    a = app._image
+
+    f = io.BytesIO()      # binary mode is important
+    w = png.Writer(a.shape[0], a.shape[1], greyscale=True, bitdepth=1)
+    w.write(f, a)
+    content = f.getvalue()
+    f.close()
+
+    headers = {'Content-Type': 'image/png'}
+    return content, 200, headers
 
 if __name__ == '__main__':
     config = get_configuration()
