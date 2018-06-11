@@ -31,15 +31,16 @@ def api_long():
 
 @app.route('/api/blank-image', methods=['PUT'])
 def put_api_blank_image():
-    app._image = np.zeros((10, 10), dtype=int)
+    app._image = np.ones((100, 100), dtype=int)
+    return 'new', 200
 
 @app.route('/api/pixel', methods=['PUT'])
 def put_api_pixel():
     x = int(request.form['x'])
     y = int(request.form['y'])
-    value = request.form['value']
+    #value = request.form['value']
 
-    app._image[x, y] = 1
+    app._image[x, y] = 0
     return 'assigned', 200
 
 @app.route('/pixel-image.png')
