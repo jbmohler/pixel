@@ -10,7 +10,7 @@ function set_data(rect){
 	var canvas = document.getElementById("myCanvas");
 	var ctx = canvas.getContext("2d");
 
-	var obj = jQuery.parseJSON(rect);
+	var obj = rect;
 
 	var bytes = hexToBytes(obj.imdata);
 
@@ -32,7 +32,46 @@ function update_full_image() {
 						},
 			success: function(data) {
 							$('#info').html('');
-							set_data(JSON.stringify(data));
+							// window.last = data.histnode;
+							set_data(data);
+						}
+	});
+}
+
+function update_incremental(changes) {
+	var canvas = document.getElementById("myCanvas");
+	$.ajax({
+			type: "GET",
+			url: "api/rectangle-binary",
+			data: "x="+changes.x+"&y="+changes.y+"&height="+changes.height+"&width="+changes.width,
+			error: function(xhr, ajaxOptions, thrownError) {
+							$('#info').html('<p>An error has occurred</p>');
+						},
+			success: function(data) {
+							$('#info').html('');
+							set_data(data);
+							read_updates();
+						}
+	});
+}
+
+function read_updates() {
+	$.ajax({
+			type: "GET",
+			url: "api/change-poll",
+			data: "last="+window.last,
+			error: function(xhr, ajaxOptions, thrownError) {
+							//$('#info').html('<p>An error has occurred</p>');
+						},
+			success: function(data) {
+							//$('#info').html('');
+							if (data.x === undefined) {
+								$('#info').html('no update')
+								read_updates();
+							}else{
+								window.last = data.histnode;
+								update_incremental(data);
+							}
 						}
 	});
 }
@@ -44,5 +83,8 @@ function auto_update() {
 }
 
 $(document).ready(function() {
-	setInterval(auto_update, 1000);
+	//setInterval(auto_update, 1000);
+	window.last = 0;
+	update_full_image();
+	read_updates();
 });
