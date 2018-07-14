@@ -125,4 +125,4 @@ if __name__ == '__main__':
     put_api_blank_image()
 
     config = get_configuration()
-    app.run(host=config.get('host', None), port=config['port'])
+    app.run(host=config.get('host', None), port=config['port'], threaded=True)
