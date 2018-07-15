@@ -64,15 +64,62 @@ def put_api_blank_image():
 
 @app.route('/api/clear-rectangle', methods=['PUT'])
 def put_api_clear_rectangle():
-    x = int(request.args['x'])
-    y = int(request.args['y'])
-    width = int(request.args['width'])
-    height = int(request.args['height'])
+    x = int(request.form['x'])
+    y = int(request.form['y'])
+    width = int(request.form['width'])
+    height = int(request.form['height'])
 
     print('clearing', x, y, width, height)
     app._image[x:x+width, y:y+height] = np.ones((width, height), dtype=int)
     add_change_node(x, y, x+width, y+height)
     return 'reset', 200
+
+@app.route('/api/line', methods=['PUT'])
+def put_api_line():
+    x1 = int(request.form['x1'])
+    y1 = int(request.form['y1'])
+    x2 = int(request.form['x2'])
+    y2 = int(request.form['y2'])
+    #value = request.form['value']
+
+    xa, xb = sorted([x1, x2])
+    ya, yb = sorted([y1, y2])
+
+    # remember y=mx+b
+    if x1 == x2:
+        # horizontal
+        for y in range(ya, yb+1):
+            app._image[x1, y] = 0
+    elif y1 == y2:
+        # horizontal
+        for x in range(xa, xb+1):
+            app._image[x1, y] = 0
+    elif xb - xa < yb - ya:
+        # y axis as independent
+        m = float(x2-x1)/float(y2-y1)
+        b = float(x1)-m*float(y1)
+        if y2 >= y1:
+            rr = range(y1, y2+1)
+        else:
+            rr = range(y1, y2-1, -1)
+        for y in rr:
+            x = m*y+b
+            x = int(x+.5) # round to nearest
+            app._image[x, y] = 0
+    else:
+        # x axis as independent
+        m = float(y2-y1)/float(x2-x1)
+        b = float(y1)-m*float(x1)
+        if x2 >= x1:
+            rr = range(x1, x2+1)
+        else:
+            rr = range(x1, x2-1, -1)
+        for x in rr:
+            y = m*x+b
+            y = int(y+.5) # round to nearest
+            app._image[x, y] = 0
+    add_change_node(xa, ya, xb, yb)
+    return 'assigned', 200
 
 @app.route('/api/pixel', methods=['PUT'])
 def put_api_pixel():
