@@ -1,6 +1,7 @@
 import os
 import io
 import json
+import math
 import binascii
 import threading
 import numpy as np
@@ -69,10 +70,34 @@ def put_api_clear_rectangle():
     width = int(request.form['width'])
     height = int(request.form['height'])
 
-    print('clearing', x, y, width, height)
     app._image[x:x+width, y:y+height] = np.ones((width, height), dtype=int)
     add_change_node(x, y, x+width, y+height)
     return 'reset', 200
+
+@app.route('/api/ellipse', methods=['PUT'])
+def put_api_ellipse():
+    xcenter = int(request.form['xcenter'])
+    ycenter = int(request.form['ycenter'])
+    xradius = int(request.form['xradius'])
+    yradius = int(request.form['yradius'])
+
+    xradius = abs(xradius)
+    yradius = abs(yradius)
+
+    pntcount = 6*(xradius + yradius)
+
+    for i in range(pntcount):
+        angle = float(i)/pntcount * 2*math.pi
+
+        x = xcenter + xradius*math.sin(angle)
+        y = ycenter + yradius*math.cos(angle)
+
+        x = int(x+.5) # round to nearest
+        y = int(y+.5) # round to nearest
+        app._image[x, y] = 0
+
+    add_change_node(xcenter-xradius, ycenter-yradius, xcenter+xradius, ycenter+yradius)
+    return 'assigned', 200
 
 @app.route('/api/line', methods=['PUT'])
 def put_api_line():
