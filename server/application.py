@@ -45,6 +45,16 @@ def get_configuration():
             CONFIG = json.loads(t)
     return CONFIG
 
+def parse_color(color):
+    if color == True:
+        return 0
+    elif color == False:
+        return 0xffffff
+    color = color.lower()
+    if len(color) == 7 and color[0] == '#' and set(color[1:]).issubset('0123456789abcdef'):
+        return int(color[1:], 16)
+    raise RuntimeError('unrecognized color -- {}'.format(color))
+
 @app.route('/')
 def hello():
     config = get_configuration()
@@ -59,7 +69,7 @@ def api_long():
 
 @app.route('/api/blank-image', methods=['PUT'])
 def put_api_blank_image():
-    app._image = np.ones((SIDE_LENGTH, SIDE_LENGTH), dtype=int)
+    app._image = np.ones((SIDE_LENGTH, SIDE_LENGTH), dtype=int)*0xffffff
     add_change_node(0, 0, SIDE_LENGTH-1, SIDE_LENGTH-1)
     return 'new', 200
 
@@ -70,7 +80,7 @@ def put_api_clear_rectangle():
     width = int(request.form['width'])
     height = int(request.form['height'])
 
-    app._image[x:x+width, y:y+height] = np.ones((width, height), dtype=int)
+    app._image[x:x+width, y:y+height] = np.ones((width, height), dtype=int)*0xffffff
     add_change_node(x, y, x+width, y+height)
     return 'reset', 200
 
@@ -80,6 +90,8 @@ def put_api_ellipse():
     ycenter = int(request.form['ycenter'])
     xradius = int(request.form['xradius'])
     yradius = int(request.form['yradius'])
+    color = request.form.get('color', '#000000')
+    color = parse_color(color)
 
     xradius = abs(xradius)
     yradius = abs(yradius)
@@ -94,9 +106,9 @@ def put_api_ellipse():
 
         x = int(x+.5) # round to nearest
         y = int(y+.5) # round to nearest
-        app._image[x, y] = 0
+        app._image[x, y] = color
 
-    add_change_node(xcenter-xradius, ycenter-yradius, xcenter+xradius, ycenter+yradius)
+    add_change_node(xcenter-xradius-1, ycenter-yradius-1, xcenter+xradius+1, ycenter+yradius+1)
     return 'assigned', 200
 
 @app.route('/api/line', methods=['PUT'])
@@ -105,7 +117,8 @@ def put_api_line():
     y1 = int(request.form['y1'])
     x2 = int(request.form['x2'])
     y2 = int(request.form['y2'])
-    #value = request.form['value']
+    color = request.form.get('color', '#000000')
+    color = parse_color(color)
 
     xa, xb = sorted([x1, x2])
     ya, yb = sorted([y1, y2])
@@ -114,11 +127,11 @@ def put_api_line():
     if x1 == x2:
         # horizontal
         for y in range(ya, yb+1):
-            app._image[x1, y] = 0
+            app._image[x1, y] = color
     elif y1 == y2:
         # horizontal
         for x in range(xa, xb+1):
-            app._image[x1, y] = 0
+            app._image[x1, y] = color
     elif xb - xa < yb - ya:
         # y axis as independent
         m = float(x2-x1)/float(y2-y1)
@@ -130,7 +143,7 @@ def put_api_line():
         for y in rr:
             x = m*y+b
             x = int(x+.5) # round to nearest
-            app._image[x, y] = 0
+            app._image[x, y] = color
     else:
         # x axis as independent
         m = float(y2-y1)/float(x2-x1)
@@ -142,7 +155,7 @@ def put_api_line():
         for x in rr:
             y = m*x+b
             y = int(y+.5) # round to nearest
-            app._image[x, y] = 0
+            app._image[x, y] = color
     add_change_node(xa, ya, xb, yb)
     return 'assigned', 200
 
@@ -150,9 +163,10 @@ def put_api_line():
 def put_api_pixel():
     x = int(request.form['x'])
     y = int(request.form['y'])
-    #value = request.form['value']
+    color = request.form.get('color', '#000000')
+    color = parse_color(color)
 
-    app._image[x, y] = 0
+    app._image[x, y] = color
     add_change_node(x, y, x, y)
     return 'assigned', 200
 
@@ -197,10 +211,8 @@ def get_rectangle_data():
 
     f = io.BytesIO()      # binary mode is important
     for pix in a[x:x+width, y:y+height].reshape([-1], order='F'):
-        if pix == 1:
-            data = b'\xff\xff\xff\xff'
-        else:
-            data = b'\x00\x00\x00\xff'
+        b1, b2, b3 = (pix // 256**2 % 256), (pix // 256) % 256, pix % 256
+        data = bytearray([b1, b2, b3, 255])
         f.write(data)
     imdata = binascii.hexlify(f.getvalue()).decode('ascii')
     f.close()
