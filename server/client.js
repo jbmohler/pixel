@@ -82,9 +82,47 @@ function auto_update() {
 	}
 }
 
+function canvas_click(event) {
+	var canvas = document.getElementById("myCanvas");
+	var elemLeft = canvas.offsetLeft,
+			elemTop = canvas.offsetTop;	
+	var x = event.pageX - elemLeft,
+			y = event.pageY - elemTop;
+	$.ajax({
+			type: "PUT",
+			url: "api/pixel",
+			data: "x="+x+"&y="+y,
+			success: function(data) {
+							$('#info').html('clicked');
+						}
+	});
+}
+
+function canvas_move(event) {
+	var canvas = document.getElementById("myCanvas");
+	var elemLeft = canvas.offsetLeft,
+			elemTop = canvas.offsetTop;	
+	var x = event.pageX - elemLeft,
+			y = event.pageY - elemTop;
+	if( event.buttons == 1 ) {
+		$.ajax({
+				type: "PUT",
+				url: "api/ellipse",
+				data: "xcenter="+x+"&ycenter="+y+"&xradius=2&yradius=2",
+				success: function(data) {
+								$('#info').html('clicked');
+							}
+		});
+	}
+}
+
 $(document).ready(function() {
 	//setInterval(auto_update, 1000);
 	window.last = 0;
 	update_full_image();
 	read_updates();
+
+	var canvas = document.getElementById("myCanvas");
+	canvas.addEventListener('click', canvas_click, false);
+	canvas.addEventListener('mousemove', canvas_move, false);
 });

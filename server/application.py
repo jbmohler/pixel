@@ -256,11 +256,13 @@ def get_current_html():
         <script src="client.js"></script>
 </head>
 <body>
-<canvas id="myCanvas" width="{width}" height="{height}" style="border:1px solid #000000;">
-</canvas>
-<div id="info"></div>
-<!-- <input type="checkbox" id="auto_update" name="auto_update" value="newsletter">
-<label for="auto_update">Update image every 1 second.</label> -->
+    <div id="dcan" style="float: left">
+        <canvas id="myCanvas" width="{width}" height="{height}" style="border:1px solid #000000;">
+        </canvas>
+        <div id="info"></div>
+        <!-- <input type="checkbox" id="auto_update" name="auto_update" value="newsletter">
+        <label for="auto_update">Update image every 1 second.</label> -->
+    </div>
 </body>
 </html>""".format(width=w, height=h)
 
