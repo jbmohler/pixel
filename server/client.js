@@ -67,11 +67,11 @@ function read_updates() {
 							//$('#info').html('');
 							if (data.x === undefined) {
 								$('#info').html('no update')
-								read_updates();
 							}else{
 								window.last = data.histnode;
-								update_incremental(data);
+								set_data(data);
 							}
+							read_updates();
 						}
 	});
 }

@@ -187,11 +187,22 @@ def get_api_change_poll():
     x1, y1, x2, y2 = change_rect_since(last)
 
     if x1 != None:
+        a = app._image
+
+        f = io.BytesIO()      # binary mode is important
+        for pix in a[x1:x2+1, y1:y2+1].reshape([-1], order='F'):
+            b1, b2, b3 = (pix // 256**2 % 256), (pix // 256) % 256, pix % 256
+            data = bytearray([b1, b2, b3, 255])
+            f.write(data)
+        imdata = binascii.hexlify(f.getvalue()).decode('ascii')
+        f.close()
+
         content = {
                 'x': x1,
                 'y': y1,
                 'width': x2-x1+1,
                 'height': y2-y1+1,
+                'imdata': imdata,
                 'histnode': histx}
     else:
         content = {}
